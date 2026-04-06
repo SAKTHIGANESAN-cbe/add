@@ -1,6 +1,34 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # Database
 database.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+static/uploads/
+uploads/
+
+# Flask
+instance/
+.webassets-cache
+
+# Logs
+*.log
