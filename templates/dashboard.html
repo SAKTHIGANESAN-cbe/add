@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Plastic Waste Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header">
+        <h2>Welcome to Your Dashboard</h2>
+        <p>Track and manage your plastic waste collection</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Statistics Section -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <h3>Total Weight Collected</h3>
+                <p class="stat-value">{{ total_weight }} <span>kg</span></p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <h3>Total Records</h3>
+                <p class="stat-value">{{ total_records }}</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <h3>Types Collected</h3>
+                <p class="stat-value">{{ type_breakdown|length }}</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">♻️</div>
+                <h3>Environmental Impact</h3>
+                <p class="stat-value" title="Every 1kg reduces landfill waste">{{ (total_weight * 0.85)|round(1) }} <span>kg saved</span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+        <div class="charts-grid">
+            <!-- Type Breakdown Chart -->
+            <div class="chart-container">
+                <h3>Plastic Waste by Type</h3>
+                <canvas id="typeChart"></canvas>
+            </div>
+
+            <!-- Monthly Breakdown Chart -->
+            <div class="chart-container">
+                <h3>Collection Over Time (Last 6 Months)</h3>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Action Section -->
+    <section class="action-section">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+            <a href="{{ url_for('add_waste') }}" class="btn btn-primary">
+                ➕ Add New Waste Entry
+            </a>
+            <a href="{{ url_for('view_waste') }}" class="btn btn-secondary">
+                📋 View All Records
+            </a>
+        </div>
+    </section>
+
+    <!-- Recent Records Section -->
+    {% if records %}
+    <section class="recent-section">
+        <h3>Recent Entries (Last 5)</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Weight (kg)</th>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records[:5] %}
+                    <tr class="table-row-hover">
+                        <td><span class="type-badge">{{ record['type'] }}</span></td>
+                        <td>{{ record['weight'] }}</td>
+                        <td>{{ record['date'] }}</td>
+                        <td>{{ record['location'] }}</td>
+                        <td>
+                            <a href="{{ url_for('update_waste', id=record['id']) }}" class="btn-small btn-edit" title="Edit">✏️</a>
+                            <a href="{{ url_for('delete_waste', id=record['id']) }}" class="btn-small btn-delete" title="Delete" onclick="return confirm('Are you sure?')">🗑️</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="dashboard-action-buttons">
+            <a href="{{ url_for('view_waste') }}" class="btn btn-secondary">View All Records</a>
+        </div>
+    </section>
+    {% else %}
+    <section class="empty-state">
+        <h3>No Records Yet</h3>
+        <p>Start tracking your plastic waste collection by adding your first entry!</p>
+        <a href="{{ url_for('add_waste') }}" class="btn btn-primary">Add Your First Entry</a>
+    </section>
+    {% endif %}
+</div>
+
+<!-- Chart.js Initialization -->
+<script>
+    // Fetch data from API
+    fetch('{{ url_for("api_dashboard_data") }}')
+        .then(response => response.json())
+        .then(data => {
+            // Type Chart
+            const typeCtx = document.getElementById('typeChart').getContext('2d');
+            const typeChart = new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.type_labels.length > 0 ? data.type_labels : ['No data'],
+                    datasets: [{
+                        data: data.type_values.length > 0 ? data.type_values : [1],
+                        backgroundColor: [
+                            '#FF6B6B',
+                            '#4ECDC4',
+                            '#45B7D1',
+                            '#FFA07A',
+                            '#98D8C8',
+                            '#F7DC6F'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Monthly Chart
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            const monthlyChart = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: data.monthly_labels.length > 0 ? data.monthly_labels : ['No data'],
+                    datasets: [{
+                        label: 'Weight (kg)',
+                        data: data.monthly_values.length > 0 ? data.monthly_values : [0],
+                        borderColor: '#4ECDC4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#FF6B6B',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error loading chart data:', error));
+</script>
+{% endblock %}

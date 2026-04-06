@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Error - Plastic Waste Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="error-page">
+        <div class="error-icon">❌</div>
+        <h2>Oops! Something went wrong</h2>
+        <p class="error-message">{{ error or 'An unexpected error has occurred.' }}</p>
+        <div class="error-actions">
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Go to Home</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">Go Back</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-page {
+        text-align: center;
+        padding: 60px 20px;
+        min-height: 500px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .error-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+        animation: shake 0.5s;
+    }
+
+    .error-page h2 {
+        color: #FF6B6B;
+        margin-bottom: 15px;
+    }
+
+    .error-message {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 16px;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-10px); }
+        75% { transform: translateX(10px); }
+    }
+</style>
+{% endblock %}
