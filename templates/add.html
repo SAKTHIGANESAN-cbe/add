@@ -14,6 +14,27 @@
         </div>
         {% endif %}
 
+        <!-- AI Image Upload Section -->
+        <div class="ai-features-card">
+            <h3>🤖 AI Waste Classifier</h3>
+            <p class="subtitle">Upload a photo of plastic waste and let AI identify the type and estimate the weight</p>
+            <div class="image-upload-section">
+                <input type="file" id="wasteImage" accept="image/*" class="file-input">
+                <label for="wasteImage" class="file-label">
+                    📸 Choose Image
+                </label>
+                <button type="button" id="classifyBtn" class="btn btn-info">🔍 Classify with AI</button>
+                <div id="classifyStatus" style="display:none;" class="status-message"></div>
+            </div>
+            <div id="classificationResult" style="display:none;" class="result-card">
+                <h4>AI Classification Result:</h4>
+                <p><strong>Type:</strong> <span id="aiType"></span></p>
+                <p><strong>Weight:</strong> <span id="aiWeight"></span> kg</p>
+                <p><strong>Confidence:</strong> <span id="aiConfidence"></span>%</p>
+                <button type="button" id="useAiDataBtn" class="btn btn-small btn-success">✓ Use These Values</button>
+            </div>
+        </div>
+
         <form method="POST" class="form-container" id="addWasteForm">
             <div class="form-group">
                 <label for="type">Waste Type *</label>
@@ -96,8 +117,152 @@
                 <li><strong>Record Location:</strong> Keep track of where you collected the waste for analysis</li>
                 <li><strong>Regular Entries:</strong> Update your records regularly for better tracking</li>
                 <li><strong>Environmental Impact:</strong> Every kg of plastic collected helps the environment!</li>
+                <li><strong>AI Assistance:</strong> Use the AI classifier to quickly identify and estimate plastic waste from photos</li>
             </ul>
         </div>
+    </div>
+</div>
+
+<style>
+.ai-features-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.ai-features-card h3 {
+    margin-top: 0;
+    color: white;
+}
+
+.image-upload-section {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-label {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 2px dashed white;
+    transition: all 0.3s;
+}
+
+.file-label:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-info {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-info:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.status-message {
+    color: white;
+    font-size: 14px;
+}
+
+.result-card {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.result-card p {
+    margin: 8px 0;
+}
+
+.btn-success {
+    background: #4CAF50;
+    color: white;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-success:hover {
+    background: #45a049;
+}
+</style>
+
+<script>
+document.getElementById('classifyBtn').addEventListener('click', async function() {
+    const imageInput = document.getElementById('wasteImage');
+    const statusDiv = document.getElementById('classifyStatus');
+    const resultDiv = document.getElementById('classificationResult');
+    
+    if (!imageInput.files.length) {
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = '❌ Please select an image first';
+        statusDiv.style.color = '#ff6b6b';
+        return;
+    }
+    
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = '⏳ Classifying image...';
+    statusDiv.style.color = 'white';
+    resultDiv.style.display = 'none';
+    
+    const formData = new FormData();
+    formData.append('image', imageInput.files[0]);
+    
+    try {
+        const response = await fetch('{{ url_for("classify_image") }}', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            statusDiv.innerHTML = '✅ Image classified successfully!';
+            statusDiv.style.color = '#51cf66';
+            
+            document.getElementById('aiType').textContent = data.type;
+            document.getElementById('aiWeight').textContent = (data.weight || 0).toFixed(2);
+            document.getElementById('aiConfidence').textContent = (data.confidence * 100).toFixed(0);
+            resultDiv.style.display = 'block';
+        } else {
+            statusDiv.innerHTML = '❌ ' + (data.message || 'Could not classify image');
+            statusDiv.style.color = '#ff6b6b';
+        }
+    } catch (error) {
+        statusDiv.innerHTML = '❌ Error: ' + error.message;
+        statusDiv.style.color = '#ff6b6b';
+    }
+});
+
+document.getElementById('useAiDataBtn').addEventListener('click', function() {
+    document.getElementById('type').value = document.getElementById('aiType').textContent;
+    document.getElementById('weight').value = document.getElementById('aiWeight').textContent;
+});
+
+// Set today's date by default
+document.getElementById('date').valueAsDate = new Date();
+</script>
+
+{% endblock %}
     </div>
 </div>
 
